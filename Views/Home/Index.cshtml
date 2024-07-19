@@ -1,0 +1,126 @@
+﻿@* Views/Home/Index.cshtml *@
+@model List<Video_Catalogue_Challenge.Models.Video>
+@{
+    ViewData["Title"] = "Video Catalogue";
+}
+
+<div id="dynamicView">
+    @if (ViewBag.ViewName == "Upload")
+    {
+        await Html.PartialAsync("Upload");
+    }
+    else
+    {
+        await Html.PartialAsync("Catalogue", Model);
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            loadView('Catalogue');
+        });
+
+        // function to load views
+        function loadView(viewName) {
+            fetch('/Home/' + viewName)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('dynamicView').innerHTML = html;
+                    if (viewName === 'Catalogue') {
+                        setupCatalogueView();
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // function to play/ pause video in catalogue page
+        function setupCatalogueView() {
+            $(".video-row").click(function () {
+                var videoPath = $(this).data("path");
+                console.log("Playing video from path: " + videoPath); // Debugging info
+                $("#videoSource").attr("src", videoPath);
+                var videoPlayer = $("#videoPlayer")[0];
+                videoPlayer.load();
+                videoPlayer.play();
+            });
+        }
+
+        
+        const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB
+
+        // function to uploadFile()
+        async function uploadFile() {
+            var fileInput = document.getElementById('file');
+            var files = fileInput.files;
+            var errorMessageDiv = document.getElementById('error-message');
+            var successMessageDiv = document.getElementById('success-message');
+
+            errorMessageDiv.classList.add('d-none');
+            errorMessageDiv.textContent = '';
+            successMessageDiv.classList.add('d-none');
+            successMessageDiv.textContent = '';
+
+            if (files.length === 0) {
+                errorMessageDiv.textContent = 'No file selected.';
+                errorMessageDiv.classList.remove('d-none');
+                return;
+            }
+
+            const file = files[0];
+
+            // front-end file size validation
+            if (file.size > MAX_FILE_SIZE) {
+                errorMessageDiv.textContent = 'File size exceeds the 200 MB limit.';
+                errorMessageDiv.classList.remove('d-none');
+                return;
+            }
+
+            const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunk size
+            const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+            for (let i = 0; i < totalChunks; i++) {
+                const start = i * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, file.size);
+                const chunk = file.slice(start, end);
+
+                const formData = new FormData();
+                formData.append('file', chunk, file.name);
+                formData.append('chunkIndex', i);
+                formData.append('totalChunks', totalChunks);
+                formData.append('totalSize', file.size);
+
+                try {
+                    const response = await fetch('/api/upload/chunk', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message);
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error);
+
+                    // Display error message to user
+                    errorMessageDiv.textContent = error.message || 'File upload failed. Please try again.';
+                    errorMessageDiv.classList.remove('d-none');
+                    return;
+                }
+            }
+
+            successMessageDiv.textContent = 'File uploaded successfully';
+            successMessageDiv.classList.remove('d-none');
+            setTimeout(() => {
+                successMessageDiv.classList.add('d-none');
+                loadView('Catalogue'); // reload catalogue page on success.
+            }, 300);
+        }
+
+
+
+
+    </script>
+}

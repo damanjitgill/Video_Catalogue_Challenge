@@ -1,0 +1,38 @@
+﻿@* Views/Home/Catalogue.cshtml *@
+@model List<Video_Catalogue_Challenge.Models.Video>
+
+<div class="container-fluid">
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info w-100">The catalogue is empty. Please upload videos to view them here.</div>
+    }
+    else
+    {
+        <label class="alert alert-info w-100">Please select a video from the table to start playback.</label>
+
+        <div class="embed-responsive embed-responsive-16by9">
+            <video id="videoPlayer" class="embed-responsive-item" controls>
+                <source id="videoSource" src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <table class="table mt-3">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Size (KB)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var video in Model)
+                {
+                    <tr class="video-row" data-path="@video.Path">
+                        <td>@video.Name</td>
+                        <td>@video.SizeInKb</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

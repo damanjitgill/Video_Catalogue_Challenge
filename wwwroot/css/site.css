@@ -1,0 +1,34 @@
+
+html {
+    position: relative;
+    min-height: 100%;
+    font-size: 14px;
+}
+
+body {
+    padding-top: 20px;
+    background-color: #f8f9fa;
+}
+
+
+.video-row {
+    cursor: pointer;
+}
+
+.embed-responsive {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.embed-responsive-item {
+    width: 100%;
+    height: 450px;
+    object-fit: cover;
+}
+
+@media (max-width: 768px) {
+    .embed-responsive-item {
+        height: 300px;
+    }
+}
